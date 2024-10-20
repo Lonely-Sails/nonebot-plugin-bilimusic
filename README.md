@@ -6,7 +6,7 @@
 
 <div align="center">
 
-# nonebot-plugin-mc-watcher
+# nonebot-plugin-bilimusic
 
 _✨ 一款基于 Nonebot2 的 Bilibili 视频提取音乐和歌词插件。 ✨_
 
