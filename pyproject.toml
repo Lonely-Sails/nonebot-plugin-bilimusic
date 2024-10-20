@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "nonebot_plugin_bilimusic"
+version = "1.0.0"
+description = "一款基于 Nonebot2 的 Bilibili 视频提取音乐和歌词插件。"
+license = "GPL3"
+authors = ["Lonely-Sails"]
+readme = "README.md"
+homepage = "https://github.com/Lonely-Sails/nonebot-plugin-mc-watcher"
+repository = "https://github.com/Lonely-Sails/nonebot-plugin-mc-watcher"
+documentation = "https://github.com/Lonely-Sails/nonebot-plugin-mc-watcher#readme"
+keywords = ["nonebot", "nonebot2", "bilibili", "music", "lryic"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+nonebot2 = "^2.2.0"
+httpx = "^0.24.1"
+nonebot-adapter-onebot = "^2.4.3"
