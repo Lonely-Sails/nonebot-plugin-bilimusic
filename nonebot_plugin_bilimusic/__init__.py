@@ -55,7 +55,7 @@ async def handle_bilimusic_group(bot: Bot, event: GroupMessageEvent, arg: Messag
     if section_info := await anext(download_task):
         title, count = section_info
         await bilimusic_group_matcher.send(
-            MessageSegment.reply(event.message_id) + F'解析成功！正在尝试解析集合 {title} 所有的 {count} 个视频，请耐心等待……'
+            MessageSegment.reply(event.message_id) + F'解析成功！正在尝试解析视频所在集合 {title} 所有的 {count} 个视频，请耐心等待……'
         )
         failed_count = await anext(download_task)
         await bilimusic_group_matcher.send(

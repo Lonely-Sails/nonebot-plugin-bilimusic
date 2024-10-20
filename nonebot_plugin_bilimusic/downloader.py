@@ -34,7 +34,8 @@ class Downloader:
     async def download_one(self, bvid: str, directory: str = None):
         if response := await self.fetch_info(bvid):
             music_url, video_info = response
-            yield title := video_info['videoData']['title']
+            title = video_info['videoData']['title']
+            yield title
             headers = {'Referer': F'https://www.bilibili.com/video/{bvid}/'}
             lyric_task = self.fetch_lyric(video_info, title, headers, directory)
             download_task = self.download_music_file(music_url, title, headers, directory)
@@ -45,6 +46,12 @@ class Downloader:
         yield None
 
     async def download_group(self, bvid: str):
+        async def download_one(bvid: str, directory: str = None):
+            download_task = self.download_one(bvid, directory)
+            if await anext(download_task):
+                return None
+            return await anext(download_task)
+
         if response := await self.fetch_info(bvid):
             music_url, video_info = response
             if section_info := video_info.get('sectionsInfo'):
@@ -53,10 +60,10 @@ class Downloader:
                 section_count = len(section_info['sections'][0]['episodes'])
                 yield section_title, section_count
                 group_path = (self.temp_directory / section_title)
-                group_path.mkdir()
+                group_path.mkdir(exist_ok=True)
                 for section in section_info['sections'][0]['episodes']:
                     section_bvid = section['bvid']
-                    download_tasks.append(self.download_one(section_bvid))
+                    download_tasks.append(download_one(section_bvid, group_path))
                 failed_count = 0
                 for start in range(0, section_count, self.config.bilimusic_limit // 2):
                     results = await asyncio.gather(*download_tasks[start:start + (self.config.bilimusic_limit // 2)])
