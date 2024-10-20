@@ -31,11 +31,12 @@ async def handle_bilimusic(bot: Bot, event: GroupMessageEvent, arg: Message = Co
         lyric_file, music_file, title = response
         await bilimusic_matcher.send(F'解析 {arg} 成功：{title}', at_sender=True)
         if lyric_file:
-            await bot.group_upload_file(group_id=event.group_id, file=str(lyric_file), name=F'{title}.lrc')
+            await bot.call_api('upload_group_file', group_id=event.group_id, file=str(lyric_file), name=F'{title}.lrc')
             lyric_file.unlink()
         if music_file:
-            await bot.group_upload_file(group_id=event.group_id, file=str(music_file), name=F'{title}.mp3')
+            await bot.call_api('upload_group_file', group_id=event.group_id, file=str(music_file), name=F'{title}.mp3')
             music_file.unlink()
         if not (music_file or lyric_file):
-            await bilimusic_matcher.send('音乐或歌词文件下载失败，请检查日志。', at_sender=True)
+            await bilimusic_matcher.finish('音乐或歌词文件下载失败，请检查日志。', at_sender=True)
+        await bilimusic_matcher.finish('音乐和歌词文件已上传至群聊！若未找到则是获取失败。', at_sender=True)
     await bilimusic_matcher.finish('请求错误！无法解析视频链接，请稍后再试。', at_sender=True)
