@@ -8,43 +8,43 @@
 
 # nonebot-plugin-mc-watcher
 
-_✨ 一款基于 Motd 监控多个 Minecraft 服务器的 QQ 机器人插件。 ✨_
+_✨ 一款基于 Nonebot2 的 Bilibili 视频提取音乐和歌词插件。 ✨_
 
 </div>
 
 ## 📖 介绍
 
-本插件可以帮助你监控多个 Minecraft 服务器的状态，并通过 QQ 机器人发送提醒，并且无需额外装任何插件或模组。目前已经实现的功能如下：
+本插件可以解析 Bilibili 视频，并提取出视频中的音乐和歌词（基于字幕故可能不准）。
 
-- `/mc` 或 `/minecraft` 指令，查看服务器状态。
-- 监控多个 Minecraft 服务器的状态，并且发送提醒。
+- `/bm` 或 `/bilimusic` 指令来解析视频。
 
 ## 💿 安装
 
-你可以使用 `nb plugin install nonebot_plugin_mc_watcher` 来安装此插件。
+你可以使用 `nb plugin install nonebot_plugin_bilimusic` 来安装此插件。
 
 ## ⚙️ 配置
 
-在 NoneBot2 项目的`.env`文件中添加下表中的必填配置
+在 NoneBot2 项目的 `.env` 文件中添加下表中的配置：
 
-|            配置项             | 必填 |  默认值  |              说明              |
-|:--------------------------:|:--:|:-----:|:----------------------------:|
-|     minecraft_servers      | 是  |   无   |    要监控的服务器名称和对应的地址（一个字典）     |
-| minecraft_update_interval  | 否  |  30   | 向 Minecraft 服务器发送 Motd 请求的间隔 |
-| minecraft_broadcast_server | 否  | True  |        是否广播服务器开启/关闭消息        |
-| minecraft_broadcast_player | 否  | False |       是否广播服务器玩家离开/加入消息       |
-| minecraft_broadcast_groups | 否  |  \[]  |  广播的 QQ 群号列表（若为空则上面的两个不生效）   |
+|       配置项        | 必填 | 默认值 |        说明        |
+|:----------------:|:--:|:---:|:----------------:|
+| bilimusic_limit  | 否  |  2  |     对请求速率的限制     |
+| bilimusic_cookie | 否  |  空  | 获取歌词所必须的 B 站账号口令 |
 
 ## 🎉 使用
 
-可以在任意群里发送 `/mc` 或 `/minecraft` 指令来查看所有服务器状态。
-
 ### 指令表
 
-|       名称       | 权限 | 说明         |
-|:--------------:|:--:|:-----------|
-| mc / minecraft | 无  | 查看所有的服务器状态 |
+|       名称       | 权限 | 说明                     |
+|:--------------:|:--:|:-----------------------|
+| bm / bilimusic | 无  | 解析视频，需附带参数（可以是BV号或是链接） |
 
-## 🙏 鸣谢
+### 获取 Cookie
 
-> [mcproto](https://pypi.org/project/mcproto/)
+> [!CAUTION]
+> 此功能需要 Bilibili 账号，对于获取的 Cookie 请妥善保管！如果因此导致账号被盗或是封禁，作者概不负责。
+
+1. 打开浏览器，进入 Bilibili 主页，登陆你的账号。
+2. 按 F12 打开开发者工具，切换到 Network 标签。
+3. 刷新页面，在 Network 标签下找到并点击 `www.bilibili.com` 请求。
+4. 打开 `Headers` 或者 `标头` 标签，找到 Cookie 字段，复制其内容（无需复制 `Cookie: ` 前缀）。
