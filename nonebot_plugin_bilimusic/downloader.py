@@ -71,7 +71,7 @@ class Downloader:
             return play_info['data']['dash']['audio'][0]['baseUrl'], video_info
 
     async def fetch_lyric(self, video_info: dict, title: str, headers: dict):
-        if self.client.headers.get('Cookie'):
+        if not self.client.headers.get('Cookie'):
             logger.warning('未设置 Cookie，无法获取歌词！')
             return None
         params = {'aid': video_info['aid'], 'cid': video_info['cid']}

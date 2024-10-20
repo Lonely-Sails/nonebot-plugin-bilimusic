@@ -29,7 +29,7 @@ async def handle_bilimusic(bot: Bot, event: GroupMessageEvent, arg: Message = Co
         await bilimusic_matcher.finish('请输入视频链接或 BV 号！', at_sender=True)
     if response := await downloader.download_one(args):
         lyric_file, music_file, title = response
-        await bilimusic_matcher.send(F'解析 {arg} 成功：{title}', at_sender=True)
+        await bilimusic_matcher.send(F'解析 {args} 成功：{title}', at_sender=True)
         if lyric_file:
             await bot.call_api('upload_group_file', group_id=event.group_id, file=str(lyric_file), name=F'{title}.lrc')
             lyric_file.unlink()
