@@ -78,7 +78,7 @@ class Downloader:
         if response := await self.request('https://api.bilibili.com/x/player/wbi/v2', headers, params=params):
             response_data = response.json()
             if response_data := response_data['data']['subtitle']['subtitles']:
-                subtitle_url = response_data[0]['url']
+                subtitle_url = 'https:' + response_data[0]['subtitle_url']
                 if response := await self.request(subtitle_url, headers):
                     response_data = response.json()
                     lyric_lines = ['[ti:]\n[ar:]\n[al:]\n[by:]\n[offset:0]', F'[00:00.00]{title}']

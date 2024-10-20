@@ -1,7 +1,7 @@
 from nonebot import on_command
 from nonebot.params import CommandArg
 from nonebot.plugin import PluginMetadata, get_plugin_config
-from nonebot.adapters.onebot.v11 import GroupMessageEvent, Message, Bot
+from nonebot.adapters.onebot.v11 import GroupMessageEvent, MessageSegment, Message, Bot
 
 from .config import Config
 from .downloader import Downloader
@@ -29,7 +29,7 @@ async def handle_bilimusic(bot: Bot, event: GroupMessageEvent, arg: Message = Co
         await bilimusic_matcher.finish('请输入视频链接或 BV 号！', at_sender=True)
     if response := await downloader.download_one(args):
         lyric_file, music_file, title = response
-        await bilimusic_matcher.send(F'解析 {args} 成功：{title}', at_sender=True)
+        await bilimusic_matcher.send(MessageSegment.reply(event.message_id) + F'解析 {args} 成功：{title}')
         if lyric_file:
             await bot.call_api('upload_group_file', group_id=event.group_id, file=str(lyric_file), name=F'{title}.lrc')
             lyric_file.unlink()
