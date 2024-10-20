@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot_plugin_bilimusic"
-version = "1.0.0"
+version = "1.0.1"
 description = "一款基于 Nonebot2 的 Bilibili 视频提取音乐和歌词插件。"
 license = "GPL3"
 authors = ["Lonely-Sails"]

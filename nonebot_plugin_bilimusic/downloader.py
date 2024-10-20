@@ -19,13 +19,13 @@ class Downloader:
         self.config = config
         if not self.temp_directory.exists():
             self.temp_directory.mkdir(parents=True)
-        if not config.cookie:
+        if not config.bilimusic_cookie:
             logger.warning(
                 '检测到 Cookie 未设置！无法获取到歌词，'
                 '请查看 https://github.com/Lonely-Sails/nonebot-plugin-bilimusic#readme 查看如何设置。'
             )
         self.client.headers = {
-            'Cookie': (config.cookie if config.cookie else ''),
+            'Cookie': (config.bilimusic_cookie if config.bilimusic_cookie else ''),
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
                           ' (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
         }
@@ -35,7 +35,7 @@ class Downloader:
             music_url, video_info = response
             title = video_info['videoData']['title']
             headers = {'Referer': F'https://www.bilibili.com/video/{bvid}/'}
-            lyric_task = self.fetch_lyric(bvid, title, headers)
+            lyric_task = self.fetch_lyric(video_info, title, headers)
             download_task = self.download_music_file(music_url, title, headers)
             if self.config.bilimusic_limit >= 2:
                 lyric_task = asyncio.create_task(lyric_task)
@@ -59,7 +59,7 @@ class Downloader:
             with file_path.open('wb') as file:
                 async for chunk in response.aiter_bytes(chunk_size=1024):
                     file.write(chunk)
-                return file_path
+                return file_path.absolute()
 
     async def fetch_info(self, bvid: str):
         url = F'https://www.bilibili.com/video/{bvid}/'
@@ -75,7 +75,7 @@ class Downloader:
             logger.warning('未设置 Cookie，无法获取歌词！')
             return None
         params = {'aid': video_info['aid'], 'cid': video_info['cid']}
-        if response := await self.request('https://api.bilibili.com/x/player/playurl', headers, params=params):
+        if response := await self.request('https://api.bilibili.com/x/player/wbi/v2', headers, params=params):
             response_data = response.json()
             if response_data := response_data['data']['subtitle']['subtitles']:
                 subtitle_url = response_data[0]['url']
@@ -88,6 +88,8 @@ class Downloader:
                         lyric_lines.append(f'[{int(time // 60):0>2}:{round(time % 60, 2):0>5}]{content}')
                     lyric_file_path = (self.temp_directory / F'{title}.lrc')
                     lyric_file_path.write_text('\n'.join(lyric_lines), encoding='Utf-8')
-                    return lyric_file_path
+                    return lyric_file_path.absolute()
         logger.warning(F'获取 {title} 歌词失败！')
         return None
+
+
