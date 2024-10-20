@@ -1,6 +1,7 @@
 import re
 import json
 import asyncio
+import shutil
 from pathlib import Path
 from tempfile import gettempdir
 from httpx import HTTPStatusError, AsyncClient
@@ -30,17 +31,41 @@ class Downloader:
                           ' (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
         }
 
-    async def download_one(self, bvid: str):
+    async def download_one(self, bvid: str, directory: str = None):
         if response := await self.fetch_info(bvid):
             music_url, video_info = response
-            title = video_info['videoData']['title']
+            yield title := video_info['videoData']['title']
             headers = {'Referer': F'https://www.bilibili.com/video/{bvid}/'}
-            lyric_task = self.fetch_lyric(video_info, title, headers)
-            download_task = self.download_music_file(music_url, title, headers)
+            lyric_task = self.fetch_lyric(video_info, title, headers, directory)
+            download_task = self.download_music_file(music_url, title, headers, directory)
             if self.config.bilimusic_limit >= 2:
                 lyric_task = asyncio.create_task(lyric_task)
                 download_task = asyncio.create_task(download_task)
-            return await lyric_task, await download_task, title
+            yield await lyric_task, await download_task, title
+        yield None
+
+    async def download_group(self, bvid: str):
+        if response := await self.fetch_info(bvid):
+            music_url, video_info = response
+            if section_info := video_info.get('sectionsInfo'):
+                download_tasks = []
+                section_title = section_info['title']
+                section_count = len(section_info['sections'][0]['episodes'])
+                yield section_title, section_count
+                group_path = (self.temp_directory / section_title)
+                group_path.mkdir()
+                for section in section_info['sections'][0]['episodes']:
+                    section_bvid = section['bvid']
+                    download_tasks.append(self.download_one(section_bvid))
+                failed_count = 0
+                for start in range(0, section_count, self.config.bilimusic_limit // 2):
+                    results = await asyncio.gather(*download_tasks[start:start + (self.config.bilimusic_limit // 2)])
+                    failed_count += sum([bool(result[0]) for result in results])
+                yield failed_count
+                shutil.make_archive(section_title, 'zip', group_path)
+                shutil.rmtree(group_path)
+                yield self.temp_directory / F'{section_title}.zip'
+        yield None
 
     async def request(self, url: str, headers: dict, params: dict = {}):
         try:
@@ -53,8 +78,9 @@ class Downloader:
         except (ConnectionError, TimeoutError):
             return None
 
-    async def download_music_file(self, url: str, title: str, headers: dict):
-        file_path = (self.temp_directory / F'{title}.mp3')
+    async def download_music_file(self, url: str, title: str, headers: dict, directory: str = None):
+        directory = (self.temp_directory / directory) if directory else self.temp_directory
+        file_path = (directory / F'{title}.mp3')
         if response := await self.request(url, headers=headers):
             with file_path.open('wb') as file:
                 async for chunk in response.aiter_bytes(chunk_size=1024):
@@ -70,7 +96,7 @@ class Downloader:
             video_info = json.loads(re.findall(r'__INITIAL_STATE__=(.*?);\(function', response_data)[0])
             return play_info['data']['dash']['audio'][0]['baseUrl'], video_info
 
-    async def fetch_lyric(self, video_info: dict, title: str, headers: dict):
+    async def fetch_lyric(self, video_info: dict, title: str, headers: dict, directory: str = None):
         if not self.client.headers.get('Cookie'):
             logger.warning('未设置 Cookie，无法获取歌词！')
             return None
@@ -86,7 +112,8 @@ class Downloader:
                         time = sentence['from']
                         content = sentence['content'].replace('♪', '').strip()
                         lyric_lines.append(f'[{int(time // 60):0>2}:{round(time % 60, 2):0>5}]{content}')
-                    lyric_file_path = (self.temp_directory / F'{title}.lrc')
+                    directory = (self.temp_directory / directory) if directory else self.temp_directory
+                    lyric_file_path = (directory / F'{title}.lrc')
                     lyric_file_path.write_text('\n'.join(lyric_lines), encoding='Utf-8')
                     return lyric_file_path.absolute()
         logger.warning(F'获取 {title} 歌词失败！')
