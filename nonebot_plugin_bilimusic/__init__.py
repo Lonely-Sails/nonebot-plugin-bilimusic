@@ -8,7 +8,7 @@ from .downloader import Downloader
 from .utils import parse_bvid
 
 __plugin_meta__ = PluginMetadata(
-    name='MinecraftWatcher',
+    name='BiliMusic Downloader',
     description='一款基于 Nonebot2 的 Bilibili 视频提取音乐和歌词插件。',
     usage='通过命令 /bilimusic 或 /bm 解析视频链接，并下载音乐和歌词文件。',
     homepage='https://github.com/Lonely-Sails/nonebot-plugin-mc-watcher',
