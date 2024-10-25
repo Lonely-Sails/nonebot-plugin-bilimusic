@@ -1,4 +1,4 @@
-from nonebot import on_command
+from nonebot import on_command, get_driver
 from nonebot.params import CommandArg
 from nonebot.plugin import PluginMetadata, get_plugin_config
 from nonebot.adapters.onebot.v11 import GroupMessageEvent, MessageSegment, Message, Bot
@@ -17,14 +17,25 @@ __plugin_meta__ = PluginMetadata(
     supported_adapters={'~onebot.v11'}
 )
 
+driver = get_driver()
 config = get_plugin_config(Config)
-downloader = Downloader(config)
+downloader = Downloader()
 bilimusic_matcher = on_command('bilimusic', aliases={'bm'}, force_whitespace=True)
 bilimusic_group_matcher = on_command('bilimusic group', aliases={'bm group'}, force_whitespace=True)
 
 
+@driver.on_startup
+def init_downloader():
+    downloader.init(config)
+
+
+@driver.on_shutdown
+def shutdown_downloader():
+    downloader.unload()
+
+
 @bilimusic_matcher.handle()
-async def handle_bilimusic(bot: Bot, event: GroupMessageEvent, args: Message = CommandArg()):
+async def _(bot: Bot, event: GroupMessageEvent, args: Message = CommandArg()):
     args = parse_bvid(args.extract_plain_text().strip())
     if not args:
         await bilimusic_matcher.finish('请输入视频链接或 BV 号！', at_sender=True)
@@ -47,7 +58,7 @@ async def handle_bilimusic(bot: Bot, event: GroupMessageEvent, args: Message = C
 
 
 @bilimusic_group_matcher.handle()
-async def handle_bilimusic_group(bot: Bot, event: GroupMessageEvent, arg: Message = CommandArg()):
+async def _(bot: Bot, event: GroupMessageEvent, arg: Message = CommandArg()):
     args = parse_bvid(arg.extract_plain_text().strip())
     if not args:
         await bilimusic_group_matcher.finish('请输入视频链接或 BV 号！', at_sender=True)
@@ -55,11 +66,13 @@ async def handle_bilimusic_group(bot: Bot, event: GroupMessageEvent, arg: Messag
     if section_info := await anext(download_task):
         title, count = section_info
         await bilimusic_group_matcher.send(
-            MessageSegment.reply(event.message_id) + F'解析成功！正在尝试解析视频所在集合 {title} 所有的 {count} 个视频，请耐心等待……'
+            MessageSegment.reply(
+                event.message_id) + F'解析成功！正在尝试解析视频所在集合 {title} 所有的 {count} 个视频，请耐心等待……'
         )
         failed_count = await anext(download_task)
         await bilimusic_group_matcher.send(
-            MessageSegment.reply(event.message_id) + F'下载完毕！共下载 {count} 个视频，其中 {failed_count} 个下载失败，请检查日志。'
+            MessageSegment.reply(
+                event.message_id) + F'下载完毕！共下载 {count} 个视频，其中 {failed_count} 个下载失败，请检查日志。'
         )
         file_path = await anext(download_task)
         await bot.call_api('upload_group_file', group_id=event.group_id, file=str(file_path), name=F'{title}.zip')
